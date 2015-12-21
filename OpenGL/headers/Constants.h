@@ -9,7 +9,7 @@
 
 #define VELOCITY 0.5f
 #define MAX_JUMPTICKS 35
-#define MOUSE_MOVE_FACTOR 30.0f
+#define MOUSE_MOVE_FACTOR 50.0f
 
 #define FIELD_WIDTH 50.0f
 #define FIELD_HEIGHT 50.0f

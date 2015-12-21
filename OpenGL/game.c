@@ -37,6 +37,7 @@ bool down = 0;
 bool up = 0;
 
 GLint jumpTicks = MAX_JUMPTICKS;
+GLint invertVal = 1;
 
 GLuint prog;
 GLenum mode = GL_TRIANGLES;
@@ -51,6 +52,8 @@ GameObject objects[GAMEOBJECTS];
 
 matrix projMatrix;
 matrix modelViewMatrix;
+
+double currentTime;
 
 void createFloor()
 {
@@ -115,21 +118,42 @@ void gravMenuActions(int value)
 	}
 }
 
+void invMenuActions(int value)
+{
+	switch(value)
+	{
+	case 1:
+		invertVal = -1;
+		break;
+	case 0:
+		invertVal = 1;
+		break;
+	}
+}
+
+int createBoolMenu(void (*f)(int))
+{
+	int bMenu;
+	bMenu = glutCreateMenu(f);
+
+	glutAddMenuEntry("On", 1);
+	glutAddMenuEntry("Off", 0);
+
+	return bMenu;
+}
+
 int createMenu()
 {
-	int menu, wireMenu, gravMenu;
+	int menu, wireMenu, gravMenu, invMenu;
 
-	wireMenu = glutCreateMenu(wireMenuActions);
-	glutAddMenuEntry("On", 1);
-	glutAddMenuEntry("Off", 0);
-
-	gravMenu = glutCreateMenu(gravMenuActions);
-	glutAddMenuEntry("On", 1);
-	glutAddMenuEntry("Off", 0);
+	wireMenu = createBoolMenu(wireMenuActions);
+	gravMenu = createBoolMenu(gravMenuActions);
+	invMenu = createBoolMenu(invMenuActions);
 
 	menu = glutCreateMenu(NULL);
 	glutAddSubMenu("Gravity", gravMenu);
 	glutAddSubMenu("Wireframe", wireMenu);
+	glutAddSubMenu("Invert Mouse", invMenu);
 
 	return menu;
 }
@@ -304,44 +328,51 @@ void keyboard_r(unsigned char key, int kx, int ky)
 
 void resetPointer()
 {
-	glutWarpPointer(WIDTH / 2, HEIGHT / 2);
+	int ww = WIDTH;
+	int wh = HEIGHT;
 
-	lastMousePosY = HEIGHT / 2.0;
-	lastMousePosX = WIDTH / 2.0;
+	glutWarpPointer(ww / 2, wh / 2);
+
+	lastMousePosY = ww / 2.0;
+	lastMousePosX = wh / 2.0;
+
+	deltaX = 0.0f;
+	deltaY = 0.0f;
 }
 
 void mouseMove(int mx, int my)
 {
 	if(!release)
 	{
-		if(fabs(WIDTH / 2.0f - mx) > 10.0f ||
-				fabs(HEIGHT / 2.0f - my) > 10.0f)
+		int ww = WIDTH;
+		int wh = HEIGHT;
+
+		if(fabs(ww / 2.0f - mx) > 15.0f ||
+				fabs(wh / 2.0f - my) > 15.0f)
 					resetPointer();
 		else
 		{
-			float vMotion = (lastMousePosY - my) / (MOUSE_MOVE_FACTOR * 2.0f);
-			float hMotion = (lastMousePosX - mx) / (MOUSE_MOVE_FACTOR * 2.0f);
+			float vMotion = (lastMousePosY - my);
+			float hMotion = (lastMousePosX - mx);
 
-			if(hMotion == 0.0f)
-			{
-				if(lastMousePosX > WIDTH / 2.0f)
-					hMotion = -1.0f / MOUSE_MOVE_FACTOR;
-				else if(lastMousePosX < WIDTH / 2.0f)
-					hMotion = 1.0f / MOUSE_MOVE_FACTOR;
-			}
-			if(vMotion == 0.0f)
-			{
-				if(lastMousePosY > HEIGHT / 2.0f)
-					vMotion = -1.0f / MOUSE_MOVE_FACTOR;
-				else if(lastMousePosY < HEIGHT / 2.0f)
-					vMotion = 1.0f / MOUSE_MOVE_FACTOR;
-			}
+			printf("%f, %f\n", vMotion, hMotion);
 
-			deltaX = -hMotion;
-			deltaY = vMotion;
+			if(vMotion > 15.0f)
+				vMotion = 4.0f;
+			else if(vMotion < -15.0f)
+				vMotion = -4.0f;
+			if(hMotion > 15.0f)
+				hMotion = 4.0f;
+			else if(hMotion < -15.0f)
+				hMotion = -4.0f;
+
+			deltaX = -hMotion / MOUSE_MOVE_FACTOR;
+			deltaY = vMotion / MOUSE_MOVE_FACTOR * invertVal;
 
 			lastMousePosY = my;
 			lastMousePosX = mx;
+
+			glutPostRedisplay();
 		}
 	}
 }
@@ -351,7 +382,7 @@ void mouse(int button, int state, int mx, int my)
 	if(button == GLUT_LEFT_BUTTON && release)
 		release = 0;
 
-	//mouseMove(mx, my);
+	mouseMove(mx, my);
 }
 
 void render()
@@ -466,7 +497,7 @@ void update()
 	deltaX = 0.0f;
 	deltaY = 0.0f;
 
-	double currentTime = glutGet(GLUT_ELAPSED_TIME);
+	currentTime = glutGet(GLUT_ELAPSED_TIME);
 	nFrames ++;
 
 	if(currentTime - lastTime >= 1000.0)
