@@ -347,23 +347,21 @@ void mouseMove(int mx, int my)
 		int ww = WIDTH;
 		int wh = HEIGHT;
 
-		if(fabs(ww / 2.0f - mx) > 15.0f ||
-				fabs(wh / 2.0f - my) > 15.0f)
+		if(fabs(ww / 2.0f - mx) > MOUSE_CONSTRAINT ||
+				fabs(wh / 2.0f - my) > MOUSE_CONSTRAINT)
 					resetPointer();
 		else
 		{
 			float vMotion = (lastMousePosY - my);
 			float hMotion = (lastMousePosX - mx);
 
-			printf("%f, %f\n", vMotion, hMotion);
-
-			if(vMotion > 15.0f)
+			if(vMotion > MOUSE_CONSTRAINT)
 				vMotion = 4.0f;
-			else if(vMotion < -15.0f)
+			else if(vMotion < -MOUSE_CONSTRAINT)
 				vMotion = -4.0f;
-			if(hMotion > 15.0f)
+			if(hMotion > MOUSE_CONSTRAINT)
 				hMotion = 4.0f;
-			else if(hMotion < -15.0f)
+			else if(hMotion < -MOUSE_CONSTRAINT)
 				hMotion = -4.0f;
 
 			deltaX = -hMotion / MOUSE_MOVE_FACTOR;
