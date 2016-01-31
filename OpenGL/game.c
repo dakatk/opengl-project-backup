@@ -19,8 +19,8 @@
 float deltaX, deltaY;
 float deltaS, deltaSt;
 
-float defaultSpeed = 1.0f;
-float speed = 1.0f;
+float defaultSpeed = 0.5f;
+float speed = 0.5f;
 
 float lastMousePosY = HEIGHT / 2;
 float lastMousePosX = WIDTH / 2;
@@ -187,7 +187,6 @@ void setCoords(GameObject* o)
 void loadgame()
 {
 	prog = loadShaderProgram("res/shaders/vertex.vs", "res/shaders/fragment.fs");
-
 	objects[0] = createFloor("res/images/floor.png", 1, prog);
 
 	int indexAmnt;
