@@ -350,7 +350,7 @@ void mouse(int button, int state, int mx, int my)
 
 void render()
 {
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 	glUseProgram(prog);
 
 	glActiveTexture(GL_TEXTURE0);
@@ -386,6 +386,12 @@ void render()
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glutSwapBuffers();
+}
+
+void reshape(int w, int h)
+{
+	int _h = (h > 0 ? h : 1);
+	glViewport(0, 0, w, _h);
 }
 
 void checkGravPhysics()
@@ -483,6 +489,7 @@ int main(int argc, string argv[])
 	glutCreateWindow("First Person World");
 
 	glutDisplayFunc(render);
+	glutReshapeFunc(reshape);
 	glutIdleFunc(update);
 	glutMouseFunc(mouse);
 	glutPassiveMotionFunc(mouseMove);
@@ -512,6 +519,7 @@ int main(int argc, string argv[])
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_MULTISAMPLE);
+	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glutMainLoop();
