@@ -7,7 +7,7 @@
 #define GAMEOBJECTS 3
 #define OBJECT_AMT 20
 
-#define VELOCITY 0.25wf
+#define VELOCITY 0.25f
 #define MAX_JUMPTICKS 35
 #define MOUSE_CONSTRAINT 15.0f
 #define MOUSE_MOVE_FACTOR 50.0f
