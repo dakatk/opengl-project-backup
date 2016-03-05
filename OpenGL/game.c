@@ -8,6 +8,12 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+
+#define GL_GLEXT_PROTOTYPES
+#define GLX_GLXEXT_PROTOTYPES
+
+#include <GL/glx.h>
+#include <GL/glxext.h>
 #include <GL/glut.h>
 
 #include "classes/ModelLoader.h"
@@ -316,24 +322,29 @@ void mouseMove(int mx, int my)
 					resetPointer();
 		else
 		{
-			float vMotion = (lastMousePosY - my);
-			float hMotion = (lastMousePosX - mx);
+			if(fabs(ww / 2.0f - mx) <= MOUSE_CONSTRAINT)
+			{
+				float hMotion = (lastMousePosX - mx);
+				if(hMotion > MOUSE_CONSTRAINT)
+					hMotion = 3.0f;
+				else if(hMotion < -MOUSE_CONSTRAINT)
+					hMotion = -3.0f;
 
-			if(vMotion > MOUSE_CONSTRAINT)
-				vMotion = 3.0f;
-			else if(vMotion < -MOUSE_CONSTRAINT)
-				vMotion = -3.0f;
-			if(hMotion > MOUSE_CONSTRAINT)
-				hMotion = 3.0f;
-			else if(hMotion < -MOUSE_CONSTRAINT)
-				hMotion = -3.0f;
+				deltaX = -hMotion / MOUSE_MOVE_FACTOR;
+				lastMousePosX = mx;
+			}
+			if(fabs(wh / 2.0f - my) <= MOUSE_CONSTRAINT)
+			{
+				float vMotion = (lastMousePosY - my);
 
-			deltaX = -hMotion / MOUSE_MOVE_FACTOR;
-			deltaY = vMotion / MOUSE_MOVE_FACTOR * invertVal;
+				if(vMotion > MOUSE_CONSTRAINT)
+					vMotion = 2.25f;
+				else if(vMotion < -MOUSE_CONSTRAINT)
+					vMotion = -2.25f;
 
-			lastMousePosY = my;
-			lastMousePosX = mx;
-
+				deltaY = vMotion / MOUSE_MOVE_FACTOR * invertVal;
+				lastMousePosY = my;
+			}
 			glutPostRedisplay();
 		}
 	}
@@ -379,18 +390,24 @@ void render()
 
 				glBindTexture(GL_TEXTURE_2D, objects[i].tex);
 				glBindVertexArray(objects[i].vao);
+
 				glDrawElements(mode, objects[i].vamt, GL_UNSIGNED_INT, NULL);
 		}
 
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
+
+	glFlush();
+	glFinish();
 	glutSwapBuffers();
 }
 
 void reshape(int w, int h)
 {
 	int _h = (h > 0 ? h : 1);
-	glViewport(0, 0, w, _h);
+	int _w = (w > 0 ? w : 1);
+
+	glViewport(0, 0, _w, _h);
 }
 
 void checkGravPhysics()
@@ -470,7 +487,7 @@ void update()
 
 	if(currentTime - lastTime >= 1000.0)
 	{
-		printf("%d fps (%f ms/frame)\n", nFrames, 1000.0 / (double)nFrames);
+		printf("%d fps (%.3f ms/frame)\n", nFrames, 1000.0 / (double)nFrames);
 		defaultSpeed = (float)nFrames / 60.0f;
 		nFrames = 0;
 		lastTime += 1000.0;
@@ -521,6 +538,12 @@ int main(int argc, string argv[])
 	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+#if defined(GLX_EXT_swap_control) && defined(X11)
+	Display* display = glXGetCurrentDisplay();
+	Drawable drawable = glXGetCurrentDrawable();
+	glXSwapIntervalEXT(display, drawable, 1);
+#endif
 	glutMainLoop();
 
 	cleanup();
