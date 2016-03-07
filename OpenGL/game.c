@@ -199,15 +199,7 @@ void loadgame()
 	int* box_indices;
 	Vertex* box_verts = loadObj("res/models/box.obj", 5.0f, &box_indices, &indexAmnt);
 	objects[1] = createObject("res/images/box.png", box_verts, box_indices, indexAmnt, indexAmnt, OBJECT_AMT, prog);
-
-	int* t_indices;
-	Vertex* t_verts = loadObj("res/models/terminator_fix.obj", 1.0f, &t_indices, &indexAmnt);
-	objects[2] = createObject("res/images/terminator.png", t_verts, t_indices, indexAmnt, indexAmnt, 2, prog);
-
 	setCoords(&objects[1]);
-	setCoords(&objects[2]);
-
-	moveObjectAll(&objects[2], 0.0f, 5.25f, 0.0f);
 
 	menuId = createMenu();
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
@@ -231,12 +223,12 @@ void cleanup()
 
 void input(int key, int ix, int iy)
 {
-	if(key == GLUT_KEY_LSHIFT && !gravity){ fdy = -VELOCITY; down = 1; }
+	if(key == LSHIFT && !gravity){ fdy = -VELOCITY; down = 1; }
 }
 
 void input_r(int key, int ix, int iy)
 {
-	if(key == GLUT_KEY_LSHIFT && !gravity) down = 0;
+	if(key == LSHIFT && !gravity) down = 0;
 }
 
 void keyboard(unsigned char key, int kx, int ky)
@@ -301,21 +293,40 @@ void resetPointer()
 	int ww = glutGet(GLUT_WINDOW_WIDTH);
 	int wh = glutGet(GLUT_WINDOW_HEIGHT);
 
-	glutWarpPointer(ww / 2, wh / 2);
+	int cx = ww / 2;
+	int cy = wh / 2;
 
-	lastMousePosY = ww / 2.0;
-	lastMousePosX = wh / 2.0;
+	glutWarpPointer(cx, cy);
 
-	deltaX = 0.0f;
-	deltaY = 0.0f;
+	lastMousePosY = cx;
+	lastMousePosX = cy;
+}
+
+static float getMDX(int mx)
+{
+	float dx = lastMousePosX - mx;
+	lastMousePosX = mx;
+
+	return dx;
+}
+
+static float getMDY(int my)
+{
+	float dy = lastMousePosY - my;
+	lastMousePosY = my;
+
+	return dy;
 }
 
 void mouseMove(int mx, int my)
 {
+	deltaX = 0.0f;
+	deltaY = 0.0f;
+
 	if(!release)
 	{
-		int ww = glutGet(GLUT_WINDOW_WIDTH);
-		int wh = glutGet(GLUT_WINDOW_HEIGHT);
+		register int ww = glutGet(GLUT_WINDOW_WIDTH);
+		register int wh = glutGet(GLUT_WINDOW_HEIGHT);
 
 		if(fabs(ww / 2.0f - mx) > MOUSE_CONSTRAINT ||
 				fabs(wh / 2.0f - my) > MOUSE_CONSTRAINT)
@@ -324,26 +335,29 @@ void mouseMove(int mx, int my)
 		{
 			if(fabs(ww / 2.0f - mx) <= MOUSE_CONSTRAINT)
 			{
-				float hMotion = (lastMousePosX - mx);
+				float hMotion = getMDX(mx);
+
 				if(hMotion > MOUSE_CONSTRAINT)
-					hMotion = 3.0f;
+					hMotion = 2.0f;
 				else if(hMotion < -MOUSE_CONSTRAINT)
-					hMotion = -3.0f;
+					hMotion = -2.0f;
+
+				hMotion *= 0.5f;
 
 				deltaX = -hMotion / MOUSE_MOVE_FACTOR;
-				lastMousePosX = mx;
 			}
 			if(fabs(wh / 2.0f - my) <= MOUSE_CONSTRAINT)
 			{
-				float vMotion = (lastMousePosY - my);
+				float vMotion = getMDY(my);
 
 				if(vMotion > MOUSE_CONSTRAINT)
-					vMotion = 2.25f;
+					vMotion = 1.50f;
 				else if(vMotion < -MOUSE_CONSTRAINT)
-					vMotion = -2.25f;
+					vMotion = -1.50f;
+
+				vMotion *= 0.5f;
 
 				deltaY = vMotion / MOUSE_MOVE_FACTOR * invertVal;
-				lastMousePosY = my;
 			}
 			glutPostRedisplay();
 		}
@@ -354,8 +368,6 @@ void mouse(int button, int state, int mx, int my)
 {
 	if(button == GLUT_LEFT_BUTTON && release)
 		release = 0;
-
-	mouseMove(mx, my);
 }
 
 void render()
