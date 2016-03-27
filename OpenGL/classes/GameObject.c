@@ -37,9 +37,12 @@ static unsigned int loadTexture(const char* filename)
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, image);
 	SOIL_free_image_data(image);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glGenerateMipmap(GL_TEXTURE_2D);
+	glGenerateMipmapEXT(GL_TEXTURE_2D);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	return texId;
@@ -152,5 +155,9 @@ void deleteObjects(GameObject* o, int numObjects)
 		free(o[i].pos);
 
 		glDeleteVertexArrays(1, &(o[i].vao));
+		glDeleteTextures(1, &(o[i].tex));
+
+		o[i].vamt = 0;
+		o[i].pamt = 0;
 	}
 }

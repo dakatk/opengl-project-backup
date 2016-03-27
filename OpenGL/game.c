@@ -342,8 +342,6 @@ void mouseMove(int mx, int my)
 				else if(hMotion < -MOUSE_CONSTRAINT)
 					hMotion = -2.0f;
 
-				hMotion *= 0.5f;
-
 				deltaX = -hMotion / MOUSE_MOVE_FACTOR;
 			}
 			if(fabs(wh / 2.0f - my) <= MOUSE_CONSTRAINT)
@@ -354,8 +352,6 @@ void mouseMove(int mx, int my)
 					vMotion = 1.50f;
 				else if(vMotion < -MOUSE_CONSTRAINT)
 					vMotion = -1.50f;
-
-				vMotion *= 0.5f;
 
 				deltaY = vMotion / MOUSE_MOVE_FACTOR * invertVal;
 			}
@@ -368,6 +364,20 @@ void mouse(int button, int state, int mx, int my)
 {
 	if(button == GLUT_LEFT_BUTTON && release)
 		release = 0;
+}
+
+void drawObject(GameObject* o, int pindex)
+{
+	glTranslatef(o->pos[pindex].x, o->pos[pindex].y, o->pos[pindex].z);
+
+	glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
+	glUniformMatrix4fv(glGetUniformLocation(prog, "modelViewMatrix"), 1, GL_FALSE, modelViewMatrix);
+
+	glBindTexture(GL_TEXTURE_2D, o->tex);
+	glBindVertexArray(o->vao);
+
+	glDrawElements(mode, o->vamt, GL_UNSIGNED_INT, NULL);
+
 }
 
 void render()
@@ -391,19 +401,21 @@ void render()
 	for(i = 0; i < GAMEOBJECTS; i ++)
 		for(j = 0; j < objects[i].pamt; j ++)
 		{
+				GLsync sync = glFenceSync(GL_SYNC_GPU_COMMANDS_COMPLETE, 0);
+				GLint result = GL_UNSIGNALED;
+				glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 10);
+				glGetSynciv(sync, GL_SYNC_STATUS, sizeof(GLint), NULL, &result);
+
+				if(result == GL_SIGNALED){
+
+					glClientWaitSync(sync, GL_SYNC_FLUSH_COMMANDS_BIT, 10);
+					glGetSynciv(sync, GL_SYNC_STATUS, sizeof(GLint), NULL, &result);
+				}
 				glLoadIdentity();
 
 				gluPerspective(45.0, w / h, 0.1, 1000.0);
 				gluLookAt(x, y, z, x + vx, y + vy, z + vz, 0.0f, 1.0f,  0.0f);
-				glTranslatef(objects[i].pos[j].x, objects[i].pos[j].y, objects[i].pos[j].z);
-
-				glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrix);
-				glUniformMatrix4fv(glGetUniformLocation(prog, "modelViewMatrix"), 1, GL_FALSE, modelViewMatrix);
-
-				glBindTexture(GL_TEXTURE_2D, objects[i].tex);
-				glBindVertexArray(objects[i].vao);
-
-				glDrawElements(mode, objects[i].vamt, GL_UNSIGNED_INT, NULL);
+				drawObject(&objects[i], j);
 		}
 
 	glBindVertexArray(0);
@@ -491,8 +503,8 @@ void update()
 	else
 		glutSetCursor(GLUT_CURSOR_NONE);
 
-	deltaX = 0.0f;
-	deltaY = 0.0f;
+	deltaX *= 0.1f;
+	deltaY *= 0.1f;
 
 	currentTime = glutGet(GLUT_ELAPSED_TIME);
 	nFrames ++;
@@ -542,14 +554,17 @@ int main(int argc, string argv[])
 
 	loadgame();
 
+	glEnable(GL_TEXTURE_2D);
 	glEnable(GL_DEPTH_TEST);
 	glDepthFunc(GL_LEQUAL);
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_MULTISAMPLE);
-	glEnable(GL_LINE_SMOOTH);
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_LINE_SMOOTH);
+	glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+	glLineWidth(1.5);
 
 #if defined(GLX_EXT_swap_control) && defined(X11)
 	Display* display = glXGetCurrentDisplay();
